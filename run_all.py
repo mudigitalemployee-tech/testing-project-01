@@ -16,6 +16,11 @@ from pipelines.house_prices_pipeline import run as run_house_prices
 from pipelines.netflix_pipeline import run as run_netflix
 from pipelines.fraud_pipeline import run as run_fraud
 from pipelines.retail_sales_pipeline import run as run_retail_sales
+from pipelines.iris_pipeline import run as run_iris
+from pipelines.diabetes_pipeline import run as run_diabetes
+from pipelines.spotify_pipeline import run as run_spotify
+from pipelines.ecommerce_pipeline import run as run_ecommerce
+from pipelines.airline_pipeline import run as run_airline
 
 logger = get_logger("run_all")
 
@@ -25,6 +30,11 @@ PIPELINES = [
     ("Netflix", run_netflix),
     ("Credit Card Fraud", run_fraud),
     ("Retail Sales", run_retail_sales),
+    ("Iris", run_iris),
+    ("Diabetes", run_diabetes),
+    ("Spotify Tracks", run_spotify),
+    ("E-Commerce", run_ecommerce),
+    ("Airline Satisfaction", run_airline),
 ]
 
 

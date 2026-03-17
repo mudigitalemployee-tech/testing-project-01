@@ -38,3 +38,33 @@ datasets:
     key_fields: ["Store", "Date", "Sales", "IsHoliday"]
     target_silver: "data/silver/retail_sales_clean.csv"
     target_gold: "data/gold/retail_sales_aggregated.csv"
+
+  iris:
+    source: "data/bronze/iris.csv"
+    key_fields: ["sepal_length", "sepal_width", "petal_length", "petal_width", "species"]
+    target_silver: "data/silver/iris_clean.csv"
+    target_gold: "data/gold/iris_features.csv"
+
+  diabetes:
+    source: "data/bronze/diabetes.csv"
+    key_fields: ["Glucose", "BMI", "Age", "Outcome"]
+    target_silver: "data/silver/diabetes_clean.csv"
+    target_gold: "data/gold/diabetes_features.csv"
+
+  spotify:
+    source: "data/bronze/spotify_tracks.csv"
+    key_fields: ["track_name", "artist_name", "genre", "popularity", "danceability", "energy"]
+    target_silver: "data/silver/spotify_clean.csv"
+    target_gold: "data/gold/spotify_features.csv"
+
+  ecommerce:
+    source: "data/bronze/ecommerce.csv"
+    key_fields: ["InvoiceNo", "StockCode", "Quantity", "UnitPrice", "CustomerID", "Country"]
+    target_silver: "data/silver/ecommerce_clean.csv"
+    target_gold: "data/gold/ecommerce_rfm.csv"
+
+  airline:
+    source: "data/bronze/airline_satisfaction.csv"
+    key_fields: ["satisfaction", "Class", "Flight Distance", "Departure Delay in Minutes"]
+    target_silver: "data/silver/airline_clean.csv"
+    target_gold: "data/gold/airline_features.csv"
