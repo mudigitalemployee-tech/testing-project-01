@@ -198,9 +198,7 @@ Grouped by:
 
 * Airflow DAG (`sales_pipeline.py`)
 * SQL scripts for schema creation
-* Clean warehouse tables
-* Aggregated KPI tables
-* Documentation
+* HTML report
 
 ---
 
