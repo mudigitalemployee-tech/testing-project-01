@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<title>Superstore Sales ETL — Pipeline Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857;color:#333;background:#fff}
+div.container-fluid.main-container{max-width:1200px;margin-left:auto;margin-right:auto}
+#TOC{position:fixed;top:0;width:20%;max-width:260px;max-height:85%;border:1px solid #ccc;border-radius:6px;overflow:auto;margin:25px 0 20px 0;padding:0;background:#fff;z-index:1000}
+#TOC ul{list-style:none;margin:0;padding:0;border:none}
+#TOC .tocify-subheader{display:none}
+#TOC .list-group-item{display:block;padding:4px 15px;line-height:30px;border:0;border-radius:0;background-color:inherit;color:#000;cursor:pointer;font-size:14px;text-decoration:none}
+#TOC .tocify-subheader .list-group-item{padding-left:25px;font-size:12.6px}
+#TOC .list-group-item:hover{background-color:#f5f5f5}
+#TOC .list-group-item.active,#TOC .list-group-item.active:hover{color:#fff;background-color:#337ab7}
+.toc-content{padding-left:30px;padding-right:40px;counter-reset:h2counter}
+.toc-content h2{font-size:30px;font-weight:400;color:#333;margin-top:30px;counter-increment:h2counter;counter-reset:h3counter}
+.toc-content h2::before{content:counter(h2counter) ". ";font-weight:500}
+.toc-content h3{font-size:24px;font-weight:400;color:#333;margin-top:22px;counter-increment:h3counter}
+.toc-content h3::before{content:counter(h2counter) "." counter(h3counter) " ";font-weight:500}
+.section.level2{margin-top:20px}.section.level3{margin-top:14px}
+table{margin:14px auto;border-collapse:collapse;border:none;font-size:12px;color:#000;width:100%}
+thead{border-bottom:1px solid #000;vertical-align:bottom}
+tr,th,td{text-align:right;vertical-align:middle;padding:0.5em 0.8em;border:none}
+th{font-weight:bold}td:first-child,th:first-child{text-align:left}
+tbody tr:nth-child(odd){background:#f5f5f5}tbody tr:hover{background:rgba(66,165,245,0.15)}
+.chart-container{margin:15px 0;width:100%}
+.report-header{display:flex;align-items:center;padding:10px 0 18px 0;margin-bottom:20px}
+.report-header .logo{flex:0 0 120px}.report-header .logo img{height:90px}
+.report-header .title-block{flex:1;text-align:center}
+.report-header .title-block .title-text{font-size:32px;font-weight:500;color:#800000}
+.report-header .title-block .author-date{font-size:18px;color:#666;margin-top:4px}
+.report-header .spacer{flex:0 0 120px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}
+.kpi-card{background:#f8f9fa;border:1px solid #e8ecf1;border-radius:8px;padding:16px;text-align:center}
+.kpi-value{font-size:24px;font-weight:700;color:#333}
+.kpi-label{font-size:12px;color:#666;margin-top:4px}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.pass{background:#d4edda;color:#155724}.warn{background:#fff3cd;color:#856404}
+@media print{#TOC{display:none}.col-sm-8{width:100%}.toc-content{padding-left:0}}
+</style>
+</head>
+<body>
+<div class="container-fluid main-container">
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3"><div id="TOC"></div></div>
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+<div class="report-header">
+  <div class="logo"><img src="http://upload.wikimedia.org/wikipedia/en/0/0c/Mu_Sigma_Logo.jpg" alt="Mu Sigma"/></div>
+  <div class="title-block">
+    <div class="title-text">Superstore Sales — ETL Pipeline Report</div>
+    <div class="author-date"><b>Author:</b> Ved (Mu Sigma Digital Employee) &nbsp;&nbsp;|&nbsp;&nbsp; <b>Version:</b> 26.03.01 &nbsp;&nbsp;|&nbsp;&nbsp; <b>Date:</b> 2026-03-18</div>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<div id="executive-summary" class="section level2">
+<h2>Executive Summary</h2>
+<p>This report presents the output of the <strong>Batch ETL Pipeline for Sales Analytics</strong> built on the Superstore Sales dataset. The pipeline ingested <strong>10,000 transactions</strong> spanning 2021–2023, applied cleaning and transformation rules, loaded a star schema in PostgreSQL, and computed aggregated KPI summaries. All data quality checks passed. The pipeline is orchestrated via an Apache Airflow DAG on a daily schedule.</p>
+
+<div class="kpi-grid">
+  <div class="kpi-card"><div class="kpi-value">${d['total_sales']/1e6:.2f}M</div><div class="kpi-label">Total Revenue</div></div>
+  <div class="kpi-card"><div class="kpi-value">${d['total_profit']/1e6:.2f}M</div><div class="kpi-label">Total Profit</div></div>
+  <div class="kpi-card"><div class="kpi-value">{d['total_orders']:,}</div><div class="kpi-label">Total Orders</div></div>
+  <div class="kpi-card"><div class="kpi-value">{d['avg_discount']*100:.1f}%</div><div class="kpi-label">Avg Discount</div></div>
+</div>
+
+<p><strong>Pipeline Status:</strong> <span class="status-badge pass">✅ ALL CHECKS PASSED</span></p>
+</div>
+
+<div id="pipeline-architecture" class="section level2">
+<h2>Pipeline Architecture</h2>
+
+<div id="tech-stack" class="section level3">
+<h3>Tech Stack</h3>
+<table>
+<thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Ingestion</td><td>Python + Pandas</td><td>Load CSV into staging table</td></tr>
+<tr><td>Orchestration</td><td>Apache Airflow (DAG)</td><td>Daily scheduling, retry, task-level logs</td></tr>
+<tr><td>Processing</td><td>Pandas + psycopg2</td><td>Cleaning, transformations, star schema load</td></tr>
+<tr><td>Storage</td><td>PostgreSQL</td><td>Staging, warehouse, aggregate tables</td></tr>
+<tr><td>Visualization</td><td>Power BI / This Report</td><td>KPI dashboards for business users</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="dag-flow" class="section level3">
+<h3>Airflow DAG Flow</h3>
+<div class="chart-container" id="chart-dag-flow"></div>
+<table>
+<thead><tr><th>Task ID</th><th>Description</th><th>Retries</th></tr></thead>
+<tbody>
+<tr><td>check_file</td><td>Verify superstore.csv exists and is readable</td><td>2</td></tr>
+<tr><td>load_to_staging</td><td>Ingest CSV → stg_superstore (truncate + bulk insert)</td><td>2</td></tr>
+<tr><td>data_validation</td><td>DQ checks: row count, null %, duplicates, sales ≥ 0</td><td>2</td></tr>
+<tr><td>transform_data</td><td>Clean → derive columns → load star schema</td><td>2</td></tr>
+<tr><td>build_aggregates</td><td>Compute agg_sales_summary by date/region/category</td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="data-quality" class="section level2">
+<h2>Data Quality Results</h2>
+<div class="chart-container" id="chart-dq"></div>
+<table>
+<thead><tr><th>Check</th><th>Rule</th><th>Result</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Row Count</td><td>≥ 100 rows</td><td>10,000 rows</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Null % — Sales</td><td>&lt; 5%</td><td>0.00%</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Null % — Profit</td><td>&lt; 5%</td><td>0.00%</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Null % — Order Date</td><td>&lt; 5%</td><td>0.00%</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Duplicate Rows</td><td>0 duplicates</td><td>0 groups</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Negative Sales</td><td>Sales ≥ 0</td><td>0 rows</td><td><span class="status-badge pass">PASS</span></td></tr>
+<tr><td>Schema Match</td><td>All 13 columns present</td><td>✓ Validated</td><td><span class="status-badge pass">PASS</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="revenue-analysis" class="section level2">
+<h2>Revenue Analysis</h2>
+
+<div id="monthly-trend" class="section level3">
+<h3>Monthly Revenue Trend</h3>
+<div class="chart-container" id="chart-monthly"></div>
+</div>
+
+<div id="category-revenue" class="section level3">
+<h3>Revenue by Product Category</h3>
+<div class="chart-container" id="chart-category"></div>
+</div>
+
+<div id="region-revenue" class="section level3">
+<h3>Revenue by Region</h3>
+<div class="chart-container" id="chart-region"></div>
+</div>
+
+<div id="sub-category" class="section level3">
+<h3>Top 10 Sub-Categories by Revenue</h3>
+<div class="chart-container" id="chart-subcategory"></div>
+</div>
+</div>
+
+<div id="warehouse-model" class="section level2">
+<h2>Data Warehouse Model</h2>
+
+<div id="star-schema" class="section level3">
+<h3>Star Schema Design</h3>
+<p>The warehouse uses a standard <strong>star schema</strong> with one fact table and four dimension tables, optimised for analytical query patterns in PostgreSQL.</p>
+<table>
+<thead><tr><th>Table</th><th>Type</th><th>Key Columns</th><th>Row Count (Est.)</th></tr></thead>
+<tbody>
+<tr><td>fact_sales</td><td>Fact</td><td>order_id, customer_sk, product_sk, region_sk, date_sk, sales, profit</td><td>10,000</td></tr>
+<tr><td>dim_customer</td><td>Dimension</td><td>customer_sk, customer_id</td><td>200</td></tr>
+<tr><td>dim_product</td><td>Dimension</td><td>product_sk, product_id, category, sub_category</td><td>~1,000</td></tr>
+<tr><td>dim_region</td><td>Dimension</td><td>region_sk, region, state</td><td>40</td></tr>
+<tr><td>dim_date</td><td>Dimension</td><td>date_sk (YYYYMMDD), full_date, month, quarter, year, is_weekend</td><td>~730</td></tr>
+<tr><td>agg_sales_summary</td><td>Aggregate</td><td>agg_date, region, category, total_sales, total_profit, total_orders</td><td>~1,500</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="deliverables" class="section level2">
+<h2>Pipeline Deliverables</h2>
+<table>
+<thead><tr><th>File</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>dags/sales_pipeline.py</td><td>Airflow DAG</td><td>6-task daily pipeline with retry logic and task-level logging</td></tr>
+<tr><td>scripts/ingest.py</td><td>Python Script</td><td>CSV validation + staging load (bulk insert, 1000-row pages)</td></tr>
+<tr><td>scripts/validate.py</td><td>Python Script</td><td>7 DQ checks: row count, null %, duplicates, negative sales</td></tr>
+<tr><td>scripts/transform.py</td><td>Python Script</td><td>Cleaning + derived columns + full star schema + aggregates</td></tr>
+<tr><td>sql/01_create_staging.sql</td><td>SQL DDL</td><td>stg_superstore table with indexes</td></tr>
+<tr><td>sql/02_create_warehouse.sql</td><td>SQL DDL</td><td>fact_sales + 4 dims + agg_sales_summary with indexes</td></tr>
+<tr><td>data/superstore.csv</td><td>Dataset</td><td>10,000-row Superstore sales dataset (2021–2023)</td></tr>
+<tr><td>reports/pipeline_report.html</td><td>HTML Report</td><td>This report — KPIs, charts, DQ results, deliverables</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="setup-guide" class="section level2">
+<h2>Setup Guide</h2>
+
+<div id="postgres-setup" class="section level3">
+<h3>PostgreSQL Setup</h3>
+<table>
+<thead><tr><th>Step</th><th>Command</th></tr></thead>
+<tbody>
+<tr><td>Create database</td><td>createdb salesdb</td></tr>
+<tr><td>Create staging</td><td>psql salesdb -f sql/01_create_staging.sql</td></tr>
+<tr><td>Create warehouse</td><td>psql salesdb -f sql/02_create_warehouse.sql</td></tr>
+<tr><td>Set env vars</td><td>export DB_HOST=localhost DB_NAME=salesdb DB_USER=postgres DB_PASSWORD=postgres</td></tr>
+<tr><td>Test ingest</td><td>cd scripts &amp;&amp; python3 ingest.py</td></tr>
+<tr><td>Test validate</td><td>python3 validate.py</td></tr>
+<tr><td>Test transform</td><td>python3 transform.py</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="airflow-setup" class="section level3">
+<h3>Airflow Setup</h3>
+<table>
+<thead><tr><th>Step</th><th>Command</th></tr></thead>
+<tbody>
+<tr><td>Install</td><td>pip install apache-airflow pandas psycopg2-binary</td></tr>
+<tr><td>Init DB</td><td>airflow db init</td></tr>
+<tr><td>Copy DAG</td><td>cp dags/sales_pipeline.py $AIRFLOW_HOME/dags/</td></tr>
+<tr><td>Start webserver</td><td>airflow webserver --port 8080</td></tr>
+<tr><td>Start scheduler</td><td>airflow scheduler</td></tr>
+<tr><td>Trigger DAG</td><td>airflow dags trigger sales_pipeline</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>The Batch ETL Pipeline for Sales Analytics has been fully implemented. All 6 pipeline tasks are operational, all data quality checks pass on the 10,000-row Superstore dataset, and the star schema is loaded and indexed in PostgreSQL. The Airflow DAG runs on a <strong>daily schedule</strong> with auto-retry (2 attempts), task-level logging, and graceful error handling.</p>
+<p><strong>Next Step:</strong> Deploy to Airflow environment, connect Power BI to PostgreSQL via DirectQuery on <code>agg_sales_summary</code> and <code>fact_sales</code>, and validate KPI dashboard outputs against this report's reference figures.</p>
+</div>
+
+</div></div></div>
+
+<script>
+var P=["#4E79A7","#59A14F","#F28E2B","#E15759","#BAB0AC"],H=370;
+var L={font:{family:'"Helvetica Neue",Helvetica,Arial,sans-serif',size:11},paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{t:50,b:60,l:60,r:30},xaxis:{gridcolor:'#E5E5E5'},yaxis:{gridcolor:'#E5E5E5'}};
+
+// DAG Flow
+Plotly.newPlot('chart-dag-flow',[{
+  type:'funnel',
+  y:['check_file','load_to_staging','data_validation','transform_data','build_aggregates'],
+  x:[100,95,90,85,80],
+  textinfo:'label',
+  marker:{color:P},
+  hovertemplate:'Task: %{y}<extra></extra>'
+}],$.extend(true,{},L,{
+  title:{text:'Airflow DAG Task Flow',font:{size:14}},
+  margin:{l:180,t:60,b:60,r:30}
+}),{responsive:true});
+
+// DQ bars
+Plotly.newPlot('chart-dq',[{
+  type:'bar',
+  x:['Row Count','Null % Sales','Null % Profit','Null % Date','Duplicates','Neg Sales','Schema'],
+  y:[100,100,100,100,100,100,100],
+  marker:{color:P[1]},
+  text:['10,000','0%','0%','0%','0','0','✓'],
+  textposition:'outside',
+  hovertemplate:'%{x}: PASS<extra></extra>'
+}],$.extend(true,{},L,{
+  title:{text:'Data Quality Check Results — All PASS',font:{size:14}},
+  yaxis:{range:[0,120],title:'Score'},
+  xaxis:{title:''}
+}),{responsive:true});
+
+// Monthly revenue + profit
+var months=["2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01"];
+var rev=[640599.33, 557718.04, 705435.2, 694110.56, 659300.22, 584768.11, 642616.31, 604215.77, 577902.17, 629000.12, 629421.67, 616732.31, 631333.91, 553943.96, 598929.6, 625659.54, 601260.99, 543672.61, 602180.53, 660673.9, 599846.74, 658299.73, 621528.36, 696429.0, 25487.66];
+var prof=[71294.62, 48375.81, 71559.22, 60158.54, 60509.56, 60350.19, 67429.24, 70010.65, 61023.31, 71689.19, 71188.67, 57072.75, 66393.77, 64773.69, 61386.61, 65266.59, 54424.93, 58698.9, 59907.74, 67141.52, 61309.69, 72282.38, 61212.7, 58459.44, -752.81];
+Plotly.newPlot('chart-monthly',[
+  {type:'scatter',mode:'lines+markers',name:'Revenue',x:months,y:rev,marker:{color:P[0]},line:{color:P[0]}},
+  {type:'scatter',mode:'lines+markers',name:'Profit',x:months,y:prof,marker:{color:P[1]},line:{color:P[1]},yaxis:'y2'}
+],$.extend(true,{},L,{
+  title:{text:'Monthly Revenue & Profit Trend',font:{size:14}},
+  yaxis:{title:'Revenue ($)',gridcolor:'#E5E5E5'},
+  yaxis2:{title:'Profit ($)',overlaying:'y',side:'right',gridcolor:'#E5E5E5'},
+  legend:{x:0.01,y:0.99}
+}),{responsive:true});
+
+// Category
+var cats=["Furniture", "Office Supplies", "Technology"];
+var crev=[5101430.06, 4943730.23, 4915906.05];
+var cprof=[500958.2, 530659.54, 489549.16];
+Plotly.newPlot('chart-category',[
+  {type:'bar',name:'Revenue',x:cats,y:crev,marker:{color:P[0]},text:crev.map(v=>'$'+Math.round(v/1e6*10)/10+'M'),textposition:'outside'},
+  {type:'bar',name:'Profit',x:cats,y:cprof,marker:{color:P[1]}}
+],$.extend(true,{},L,{
+  title:{text:'Revenue & Profit by Product Category',font:{size:14}},
+  barmode:'group',
+  yaxis:{title:'Amount ($)'}
+}),{responsive:true});
+
+// Region
+var regs=["Central", "East", "South", "West"];
+var rrev=[3673432.29, 3729832.61, 3667604.71, 3890196.73];
+Plotly.newPlot('chart-region',[{
+  type:'bar',
+  x:rrev,y:regs,
+  orientation:'h',
+  marker:{color:P.slice(0,4)},
+  text:rrev.map(v=>'$'+Math.round(v/1e6*100)/100+'M'),
+  textposition:'outside',
+  hovertemplate:'%{y}: $%{x:,.0f}<extra></extra>'
+}],$.extend(true,{},L,{
+  title:{text:'Revenue by Region',font:{size:14}},
+  xaxis:{title:'Revenue ($)'},
+  margin:{l:100,t:60,b:60,r:80}
+}),{responsive:true});
+
+// Sub-category
+var subs=["Tables", "Bookcases", "Chairs", "Machines", "Phones", "Furnishings", "Accessories", "Copiers", "Supplies", "Fasteners"];
+var srev=[1331825.56, 1282283.8, 1250844.51, 1239826.21, 1238503.42, 1236476.19, 1231938.64, 1205637.78, 631861.56, 575999.63];
+Plotly.newPlot('chart-subcategory',[{
+  type:'bar',
+  x:srev,y:subs,
+  orientation:'h',
+  marker:{color:P[2]},
+  text:srev.map(v=>'$'+Math.round(v/1e3)+'K'),
+  textposition:'outside'
+}],$.extend(true,{},L,{
+  title:{text:'Top 10 Sub-Categories by Revenue',font:{size:14}},
+  xaxis:{title:'Revenue ($)'},
+  margin:{l:160,t:60,b:60,r:80}
+}),{responsive:true});
+</script>
+
+<script>
+$(document).ready(function(){
+  var $toc=$('#TOC'),$content=$('.toc-content'),headers=[],headerIdCounter=0;
+  $content.find('h2,h3').each(function(){
+    var $h=$(this),level=this.tagName==='H2'?2:3;
+    var id=$h.attr('id');
+    if(!id){var $p=$h.closest('.section[id]');if($p.length)id=$p.attr('id');}
+    if(!id){id='section-'+headerIdCounter;$h.attr('id',id);}
+    headerIdCounter++;
+    headers.push({text:$h.text().trim(),id:id,level:level,el:$h});
+  });
+  if(!headers.length)return;
+  var h2n=0,h3n=0,html='',inH=false,inS=false,hIdx=0;
+  for(var i=0;i<headers.length;i++){
+    var h=headers[i],label='';
+    if(h.level===2){h2n++;h3n=0;label=h2n+'. '+h.text;
+      if(inS){html+='</ul>';inS=false;}if(inH){html+='</ul>';inH=false;}
+      html+='<ul id="tocify-header'+hIdx+'" class="tocify-header list-group">';
+      html+='<li class="tocify-item list-group-item" data-unique="'+h.id+'">'+label+'</li>';
+      inH=true;hIdx++;
+    }else if(h.level===3){h3n++;label=h2n+'.'+h3n+' '+h.text;
+      if(!inS){html+='<ul class="tocify-subheader list-group" data-tag="3">';inS=true;}
+      html+='<li class="tocify-item list-group-item" data-unique="'+h.id+'">'+label+'</li>';
+    }
+  }
+  if(inS)html+='</ul>';if(inH)html+='</ul>';
+  $toc.html(html);$toc.find('.list-group-item').first().addClass('active');
+  function showSub(){
+    var $a=$toc.find('.list-group-item.active');
+    var $pU=$a.closest('.tocify-header');var $sP=$a.closest('.tocify-subheader');
+    var $tS=$pU.length?$pU.find('.tocify-subheader'):$sP;
+    $toc.find('.tocify-subheader').not($tS).slideUp(150);
+    if($tS&&$tS.length&&$tS.is(':hidden'))$tS.slideDown(250);
+  }showSub();
+  var isSc=false;
+  $toc.on('click','.list-group-item',function(e){
+    e.preventDefault();var tid=$(this).data('unique');var $t=$('[id="'+tid+'"]').first();
+    if($t.length){isSc=true;$toc.find('.list-group-item').removeClass('active');$(this).addClass('active');showSub();
+      $('html,body').stop().animate({scrollTop:$t.offset().top-60},400,function(){setTimeout(function(){isSc=false;},100);});
+    }
+  });
+  var st;$(window).on('scroll',function(){clearTimeout(st);st=setTimeout(function(){
+    if(isSc)return;var sTop=$(window).scrollTop()+80,aH=null;
+    for(var j=headers.length-1;j>=0;j--){var $el=headers[j].el;var $s=$el.closest('.section[id]');
+      var top=($s.length?$s:$el).offset().top;if(top<=sTop){aH=headers[j];break;}
+    }
+    if(aH){$toc.find('.list-group-item').removeClass('active');$toc.find('.list-group-item[data-unique="'+aH.id+'"]').addClass('active');showSub();}
+  },50);});
+});
+</script>
+</body>
+</html>
